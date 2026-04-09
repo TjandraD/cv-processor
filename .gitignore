@@ -211,3 +211,6 @@ docs/
 # Project-specific
 *.db
 .DS_Store
+
+# AI related configs
+.qwen/
