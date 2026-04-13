@@ -6,11 +6,11 @@ CORS(app)
 
 # Blueprints registered as each epic is completed
 from routes.health import health_bp
-# from routes.jobs   import jobs_bp
+from routes.jobs   import jobs_bp
 # from routes.match  import match_bp
 
 app.register_blueprint(health_bp, url_prefix="/api")
-# app.register_blueprint(jobs_bp,   url_prefix="/api")
+app.register_blueprint(jobs_bp,   url_prefix="/api")
 # app.register_blueprint(match_bp,  url_prefix="/api")
 
 # Pre-load model at startup to avoid cold start on first request
