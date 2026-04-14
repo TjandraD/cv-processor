@@ -59,31 +59,52 @@ backend/
 
 ## Setup
 
-### 1. Install dependencies
+### 1. Create a virtual environment
+
+```bash
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Upgrade pip
+pip install --upgrade pip
+```
+
+### 2. Install dependencies
 
 ```bash
 pip install -r backend/requirements.txt
 python -m spacy download xx_ent_wiki_sm
 ```
 
-### 2. Configure environment
+> **Note:** If you encounter issues with CUDA dependencies during installation, you can install CPU-only PyTorch:
+> ```bash
+> pip install torch --index-url https://download.pytorch.org/whl/cpu
+> ```
+
+### 3. Configure environment
 
 ```bash
 cp backend/.env.example backend/.env
 # Edit backend/.env — set APP_TOKEN to a real UUID
+# Example: uuidgen | tr -d '\n' (Linux/macOS) to generate a UUID
 ```
 
-### 3. Initialise the database
+### 4. Initialise the database
 
 ```bash
 cd backend
 sqlite3 app.db < seed/schema.sql
-sqlite3 app.db < seed/jobs_seed.sql
 ```
 
-### 4. Run
+> **Note:** The `seed/jobs_seed.sql` file mentioned in the project structure is not yet available. You'll need to populate the database with job data manually or create your own seed script using the schema in `seed/schema.sql`.
+
+### 5. Run
 
 ```bash
+# Activate virtual environment (if not already activated)
+source venv/bin/activate
+
 # Development
 python backend/app.py
 
