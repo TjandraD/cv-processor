@@ -1,5 +1,39 @@
 import re
 
+# Compiled regex for bilingual section headings — word-boundary guards prevent mid-word matches
+_HEADING_RE = re.compile(
+    r'(?i)'  # case-insensitive
+    r'(?<!\n)'  # not already preceded by a newline
+    r'(?:'
+    r'\b(?:skills?|keahlian|keterampilan|tech\s*skills?|technical\s*skills?)\b'
+    r'|'
+    r'\b(?:experience?|pengalaman|work\s*experience?|pengalaman\s*kerja)\b'
+    r'|'
+    r'\b(?:education?|pendidikan|educational\s*background|latar\s*belakang\s*pendidikan)\b'
+    r'|'
+    r'\b(?:name|nama)\b'
+    r'|'
+    r'\b(?:summary|ringkasan|profile|profil|objective|tujuan)\b'
+    r'|'
+    r'\b(?:certifications?|sertifikasi?|licenses?|lisensi)\b'
+    r'|'
+    r'\b(?:languages?|bahasa)\b'
+    r'|'
+    r'\b(?:projects?|proyek)\b'
+    r')'
+    r'(?!\n)'  # not already followed by a newline
+)
+
+
+def inject_section_breaks(text: str) -> str:
+    """Insert newlines around section headings so flat OCR text becomes line-structured."""
+    def _replace(match):
+        heading = match.group(0)
+        return f'\n{heading}\n'
+
+    return _HEADING_RE.sub(_replace, text)
+
+
 SKILL_LIST = [
     # English - Programming Languages
     "python", "javascript", "typescript", "java", "c++", "c#", "go", "golang",
