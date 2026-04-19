@@ -41,6 +41,16 @@ SECTION_ANCHORS = {
 }
 
 
+_EDU_PATTERNS = [
+    (r'\b(s3|doctorate|doktor|phd)\b', "Doctorate"),
+    (r'\b(s2|master|magister|m\.sc|msc)\b', "Master"),
+    (r'\b(s1|bachelor|sarjana|b\.sc|bsc)\b', "Bachelor"),
+    (r'\b(d3|diploma)\b', "Diploma"),
+]
+
+_EXP_PATTERN = re.compile(r'(\d+)\s*(?:tahun|year)', re.IGNORECASE)
+
+
 def inject_section_breaks(text: str) -> str:
     """Insert newlines around section headings so flat OCR text becomes line-structured."""
     def _replace(match):
@@ -158,3 +168,27 @@ def extract_skills(text: str) -> list:
                 found_skills.append(skill_lower)
 
     return found_skills
+
+
+def extract_education(text: str) -> str | None:
+    """Extract highest education level from text based on priority order."""
+    if not text or not text.strip():
+        return None
+
+    for pattern, label in _EDU_PATTERNS:
+        if re.search(pattern, text, re.IGNORECASE):
+            return label
+
+    return None
+
+
+def extract_experience_years(text: str) -> int | None:
+    """Extract largest mentioned years of experience from text."""
+    if not text or not text.strip():
+        return None
+
+    matches = _EXP_PATTERN.findall(text)
+    if not matches:
+        return None
+
+    return max(int(value) for value in matches)
