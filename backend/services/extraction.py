@@ -25,6 +25,22 @@ _HEADING_RE = re.compile(
 )
 
 
+SECTION_ANCHORS = {
+    "skills": [
+        "keahlian", "keterampilan", "kompetensi", "kemampuan",
+        "skills", "competencies", "technical skills",
+    ],
+    "experience": [
+        "pengalaman kerja", "pengalaman", "riwayat pekerjaan",
+        "experience", "work history", "employment",
+    ],
+    "education": [
+        "pendidikan", "riwayat pendidikan",
+        "education", "academic background",
+    ],
+}
+
+
 def inject_section_breaks(text: str) -> str:
     """Insert newlines around section headings so flat OCR text becomes line-structured."""
     def _replace(match):
@@ -32,6 +48,41 @@ def inject_section_breaks(text: str) -> str:
         return f'\n{heading}\n'
 
     return _HEADING_RE.sub(_replace, text)
+
+
+def segment_cv(text: str) -> dict:
+    """Split CV text into skills/experience/education buckets with full-text fallback."""
+    normalized = inject_section_breaks(text)
+    buckets = {"skills": [], "experience": [], "education": []}
+    current_section = None
+
+    for raw_line in normalized.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        lowered = line.lower()
+        matched_section = next(
+            (
+                section
+                for section, anchors in SECTION_ANCHORS.items()
+                if any(anchor in lowered for anchor in anchors)
+            ),
+            None,
+        )
+
+        if matched_section:
+            current_section = matched_section
+            continue
+
+        if current_section:
+            buckets[current_section].append(line)
+
+    # If a section has no captured lines, use the full normalized text for that section.
+    return {
+        section: (" ".join(lines) if lines else normalized)
+        for section, lines in buckets.items()
+    }
 
 
 SKILL_LIST = [
