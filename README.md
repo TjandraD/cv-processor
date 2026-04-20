@@ -126,6 +126,40 @@ The entrypoint script automatically applies schema and seed data on first run. T
 
 Service available at: `http://localhost:5000/api/health`
 
+### Docker deployment quickstart (VM)
+
+```bash
+# 1) Prepare runtime env file
+cp backend/.env.example backend/.env
+
+# 2) Set APP_TOKEN in backend/.env
+uuidgen
+
+# 3) Build and run
+docker compose up --build -d
+
+# 4) Verify health
+curl -f http://localhost:5000/api/health
+```
+
+Optional verification:
+
+```bash
+# Confirm seeded jobs exist (requires APP_TOKEN from backend/.env)
+TOKEN="<your-app-token>"
+curl -s -H "Authorization: Bearer $TOKEN" \
+    "http://localhost:5000/api/jobs?page=1&limit=10"
+
+# Stop services but keep DB data
+docker compose down
+
+# Bring back up (data persists in named volume)
+docker compose up -d
+
+# Remove services + DB volume (data reset)
+docker compose down -v
+```
+
 ---
 
 ## API Endpoints
