@@ -36,17 +36,19 @@ def match():
     if not job:
         return error("JOB_NOT_FOUND", f"No job found with id '{job_id}'.", 404)
 
-    jd_dict = {
-        "required_skills": job.skills_list(),
-        "description": job.description,
-        "required_education": job.required_education or "",
-        "required_experience_years": job.required_experience_years,
-    }
-    jd_full_text = job.description + " " + " ".join(job.skills_list())
-
     try:
+        jd_dict = {
+            "required_skills": job.skills_list(),
+            "description": job.description,
+            "required_education": job.required_education or "",
+            "required_experience_years": job.required_experience_years,
+        }
+        jd_full_text = job.description + " " + " ".join(job.skills_list())
+
         cleaned = normalize(cv_text)
         language_detected = detect_language(cleaned)
+        if not isinstance(language_detected, str) or not language_detected:
+            language_detected = "unknown"
         cv_sections = segment_cv(cleaned)
 
         all_extracted_skills = extract_skills(cleaned)
@@ -61,10 +63,14 @@ def match():
         years_detected = extract_experience_years(cv_sections["experience"])
 
         scores = compute_match(cv_sections, jd_dict)
-        keyword_score = compute_keyword_score(cv_text, jd_full_text)
-        score_comparison = build_score_comparison(scores["semantic_score"], keyword_score)
+        semantic_score = float(scores["semantic_score"])
+        keyword_score = float(compute_keyword_score(cv_text, jd_full_text))
+        score_comparison = build_score_comparison(semantic_score, keyword_score)
+        score_comparison["semantic_score"] = float(score_comparison["semantic_score"])
+        score_comparison["keyword_score"] = float(score_comparison["keyword_score"])
+        score_comparison["improvement"] = float(round(score_comparison["improvement"], 2))
 
-        semantic = scores["semantic_score"]
+        semantic = semantic_score
         if semantic >= 80:
             grade = "High Match"
         elif semantic >= 60:
