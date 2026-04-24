@@ -5,6 +5,8 @@ from utils.response_utils import success, error
 from models.db_models import get_db, Job
 from services.embedding_service import compute_match
 from services.baseline_service import compute_keyword_score, build_score_comparison
+from services.preprocessing import normalize, detect_language
+from services.extraction import segment_cv, extract_skills, extract_education, extract_experience_years
 
 match_bp = Blueprint("match", __name__)
 
@@ -43,13 +45,20 @@ def match():
     jd_full_text = job.description + " " + " ".join(job.skills_list())
 
     try:
-        # Stub placeholders (replaced in BE-021 with real NLP calls).
-        language_detected = "unknown"
-        cv_sections = {"skills": cv_text, "experience": cv_text, "education": cv_text}
-        matched_skills = []
-        missing_skills = jd_dict["required_skills"]
-        detected_education = None
-        years_detected = None
+        cleaned = normalize(cv_text)
+        language_detected = detect_language(cleaned)
+        cv_sections = segment_cv(cleaned)
+
+        all_extracted_skills = extract_skills(cleaned)
+        jd_skills_lower = [s.lower() for s in jd_dict["required_skills"]]
+        matched_skills = [s for s in all_extracted_skills if s.lower() in jd_skills_lower]
+        missing_skills = [
+            s for s in jd_dict["required_skills"]
+            if s.lower() not in [m.lower() for m in matched_skills]
+        ]
+
+        detected_education = extract_education(cv_sections["education"])
+        years_detected = extract_experience_years(cv_sections["experience"])
 
         scores = compute_match(cv_sections, jd_dict)
         keyword_score = compute_keyword_score(cv_text, jd_full_text)
