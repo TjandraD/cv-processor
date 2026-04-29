@@ -14,8 +14,8 @@ app.register_blueprint(jobs_bp,   url_prefix="/api")
 app.register_blueprint(match_bp,  url_prefix="/api")
 
 # Pre-load model at startup to avoid cold start on first request
-# from services.embedding_service import get_model
-# get_model()
+from services.embedding_service import get_model
+get_model()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, use_reloader=False, port=5000)

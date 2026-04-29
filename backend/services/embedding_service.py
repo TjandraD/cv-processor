@@ -8,6 +8,10 @@ _model = None
 _model_loaded = False
 
 
+def is_model_loaded() -> bool:
+    return _model_loaded
+
+
 def get_model() -> SentenceTransformer:
     global _model, _model_loaded
 
