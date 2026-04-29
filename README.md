@@ -1,6 +1,6 @@
 # cv-processor
 
-Backend REST API for a bilingual CV semantic matching system. Receives pre-extracted CV text strings from the frontend (OCR is handled on the FE side), matches them against job postings using multilingual sentence embeddings, and returns ranked candidate results alongside a TF-IDF keyword baseline score for comparison.
+Backend REST API for a bilingual CV semantic matching system. Receives a pre-extracted CV text string from the frontend (OCR is handled on the FE side), matches it against a job posting using multilingual sentence embeddings, and returns the match result alongside a TF-IDF keyword baseline score for direct comparison.
 
 > **Skripsi:** Perancangan Sistem Filtering Kandidat Berdasarkan Kualifikasi Menggunakan Analisis Semantik Berbasis Machine Learning pada Data Curriculum Vitae
 
@@ -14,7 +14,7 @@ Backend REST API for a bilingual CV semantic matching system. Receives pre-extra
 | Auth | Static UUID token in `.env` | Simple Bearer token auth |
 | NLP Preprocessing | `langdetect`, `re`, `unicodedata` | Text cleaning, language detection |
 | Skill Extraction | `spaCy` + custom bilingual skill list | Rule-based NER for skills |
-| Embedding Model | `sentence-transformers` (`paraphrase-multilingual-MiniLM-L12-v2`) | Cross-lingual sentence embeddings |
+| Embedding Model | `sentence-transformers` (`paraphrase-multilingual-mpnet-base-v2`) | Cross-lingual sentence embeddings |
 | Similarity | `scikit-learn` (`cosine_similarity`) | Compute semantic match scores |
 | Baseline | `scikit-learn` (`TfidfVectorizer`) | TF-IDF keyword matching — always returned alongside semantic score |
 | Data Store | `SQLite` (via `SQLAlchemy`) | Job descriptions — read-only from API |
@@ -32,7 +32,7 @@ backend/
 ├── requirements.txt
 ├── seed/
 │   ├── schema.sql              # Idempotent CREATE TABLE statement
-│   └── jobs_seed.sql           # INSERT OR IGNORE seed data (5 industries)
+│   └── jobs_seed.sql           # INSERT OR IGNORE seed data
 │
 ├── middleware/
 │   └── auth.py                 # Static Bearer token validation
@@ -95,9 +95,8 @@ cp backend/.env.example backend/.env
 ```bash
 cd backend
 sqlite3 app.db < seed/schema.sql
+sqlite3 app.db < seed/jobs_seed.sql
 ```
-
-> **Note:** The `seed/jobs_seed.sql` file mentioned in the project structure is not yet available. You'll need to populate the database with job data manually or create your own seed script using the schema in `seed/schema.sql`.
 
 ### 5. Run
 
@@ -105,11 +104,12 @@ sqlite3 app.db < seed/schema.sql
 # Activate virtual environment (if not already activated)
 source venv/bin/activate
 
-# Development
-python backend/app.py
+# Development (run from the backend/ directory — app uses relative imports)
+cd backend
+python app.py
 
 # Production
-gunicorn -w 1 -b 0.0.0.0:5000 backend/app:app
+gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 app:app
 ```
 
 ---
@@ -171,11 +171,11 @@ All endpoints except `/api/health` require: `Authorization: Bearer <token>`
 | `GET` | `/api/health` | Liveness check — no auth required |
 | `GET` | `/api/jobs` | List job postings (supports `industry`, `page`, `limit` query params) |
 | `GET` | `/api/jobs/<job_id>` | Get full job detail |
-| `POST` | `/api/match` | Batch CV matching — returns ranked candidates with semantic and keyword scores |
+| `POST` | `/api/match` | Single-candidate CV matching — returns semantic and keyword scores with breakdown |
 
 ### POST /api/match
 
-Accepts a `job_id` and a list of candidates with pre-extracted `cv_text`. Returns candidates ranked by `semantic_score` descending. Every result includes both the semantic score and the TF-IDF keyword score side by side for direct comparison.
+Accepts a single candidate per request. Required fields: `job_id`, `candidate_id`, `candidate_name`, `cv_text` (pre-extracted plain text). Returns semantic and TF-IDF keyword scores side by side with a per-section breakdown.
 
 **Grade thresholds** (based on `semantic_score`):
 
