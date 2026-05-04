@@ -212,6 +212,7 @@ docs/
 *.db
 .DS_Store
 tmp/
+models/
 
 # AI related configs
 .qwen/
