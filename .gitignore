@@ -211,6 +211,7 @@ docs/
 # Project-specific
 *.db
 .DS_Store
+tmp/
 
 # AI related configs
 .qwen/
