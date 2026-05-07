@@ -213,6 +213,8 @@ docs/
 .DS_Store
 tmp/
 models/
+backend/checkpoints/
+data/*.csv
 
 # AI related configs
 .qwen/
